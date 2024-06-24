@@ -1,4 +1,4 @@
-image_root: '/conten/'
+image_root: '/content/'
 ann_root: 'annotation'
 dataset: 'coco'
 
