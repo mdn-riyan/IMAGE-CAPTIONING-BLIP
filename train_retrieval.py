@@ -245,8 +245,8 @@ def main(args, config):
                                                           collate_fns=[None,None,None])   
    
 
-    #### Model #### 
-    print("Creating model")
+#### Model #### 
+    print("Membuat model")
     model = blip_retrieval(pretrained=config['pretrained'], image_size=config['image_size'], vit=config['vit'], 
                              vit_grad_ckpt=config['vit_grad_ckpt'], vit_ckpt_layer=config['vit_ckpt_layer'], 
                              queue_size=config['queue_size'], negative_all_rank=config['negative_all_rank'])
@@ -258,12 +258,16 @@ def main(args, config):
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         model_without_ddp = model.module   
 
-    optimizer = torch.optim.AdamW(params=model.parameters(), lr=config['init_lr'], weight_decay=config['weight_decay']) 
+    # Konversi eksplisit nilai init_lr dan weight_decay ke float
+    lr = float(config['init_lr'])
+    weight_decay = float(config['weight_decay'])
+
+    optimizer = torch.optim.AdamW(params=model.parameters(), lr=lr, weight_decay=weight_decay)
     
     best = 0
     best_epoch = 0
 
-    print("Start training")
+    print("Mulai pelatihan")
     start_time = time.time()    
 
     for epoch in range(0, config['max_epoch']):    
@@ -271,14 +275,14 @@ def main(args, config):
             if args.distributed:
                 train_loader.sampler.set_epoch(epoch)
                 
-            cosine_lr_schedule(optimizer, epoch, config['max_epoch'], config['init_lr'], config['min_lr'])
+            cosine_lr_schedule(optimizer, epoch, config['max_epoch'], lr, config['min_lr'])
             
             train_stats = train(model, train_loader, optimizer, epoch, device, config)  
             
         score_val_i2t, score_val_t2i, = evaluation(model_without_ddp, val_loader, device, config)
         score_test_i2t, score_test_t2i = evaluation(model_without_ddp, test_loader, device, config)
     
-        if utils.is_main_process():  
+        if utils.is_main_process(): 
       
             val_result = itm_eval(score_val_i2t, score_val_t2i, val_loader.dataset.txt2img, val_loader.dataset.img2txt)  
             print(val_result)
