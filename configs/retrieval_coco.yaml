@@ -12,7 +12,7 @@ batch_size_train: 32
 batch_size_test: 64
 vit_grad_ckpt: True
 vit_ckpt_layer: 4
-init_lr: 0.00001
+init_lr: 0.0001
 
 # vit: 'large'
 # batch_size_train: 16
